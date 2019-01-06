@@ -2,6 +2,7 @@
 Utility functions.
 """
 
+from __future__ import print_function
 import codecs
 import os
 import subprocess
@@ -46,7 +47,7 @@ def git_am(mbox, args):
     cmd.append(mbox)
 
     try:
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        print(subprocess.check_output(cmd, stderr=subprocess.STDOUT), end='')
     except subprocess.CalledProcessError as exc:
         print(exc.output)
         sys.exit(exc.returncode)

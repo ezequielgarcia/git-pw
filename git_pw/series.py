@@ -31,14 +31,18 @@ def apply_cmd(series_id, args):
     LOG.debug('Applying series: id=%d, args=%s', series_id, ' '.join(args))
 
     series = api.detail('series', series_id)
-    mbox = api.download(series['mbox'])
+    mboxes = []
+    for patch in series.get('patches'):
+        mboxes.append(api.download(patch['mbox']))
 
-    utils.git_am(mbox, args)
+    for m in mboxes:
+        LOG.debug('Applying patch %s', m)
+        utils.git_am(m, args)
 
 
 @click.command(name='download')
 @click.argument('series_id', type=click.INT)
-@click.argument('output', type=click.File('wb'), required=False)
+@click.argument('output', type=click.File(mode='w', encoding='utf-8'), required=False)
 def download_cmd(series_id, output):
     """Download series in mbox format.
 
@@ -47,20 +51,15 @@ def download_cmd(series_id, output):
     provided, the output path will be automatically chosen.
     """
     LOG.debug('Downloading series: id=%d', series_id)
-
-    path = None
     series = api.detail('series', series_id)
 
-    if output:
-        output.write(api.get(series['mbox']).text)
-
-        if output != sys.stdout:
-            path = output.name
-    else:
-        path = api.download(series['mbox'])
-
-    if path:
-        LOG.info('Downloaded series to %s', path)
+    for patch in series.get('patches'):
+        if output:
+            content = api.get(patch['mbox']).text
+            output.write(content)
+        else:
+            for patch in series.get('patches'):
+                api.download(patch['mbox'])
 
 
 @click.command(name='show')
